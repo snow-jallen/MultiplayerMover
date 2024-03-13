@@ -1,0 +1,102 @@
+﻿@page "/"
+@using MultiplayerMover.Logic
+@inject ILogger<Home> logger
+
+<style>
+    .movementContainer {
+        background-color: aliceblue;
+        height: 500px;
+        width: 1000px;
+        margin: 1rem;
+        position: relative;
+    }
+</style>
+
+<h3>Image Mover</h3>
+@if (!joined)
+{
+    <form @onsubmit=join>
+        <input @bind=playerName placeholder="Player Name" />
+        <input type="submit" value="Join Game" />
+    </form>
+}
+else
+{
+    <div tabindex="0" class="movementContainer" @onkeydown=keyPress>
+        @foreach (var player in GameState.Players)
+        {
+            string style = $"position: absolute; bottom: {player.Y}px; left: {player.X}px; width: 50px; height: 50px;";
+            <figure style="@style">
+                <img src="@imageUrl" />
+                <figcaption>@player.Name</figcaption>
+            </figure>
+        }
+    </div>
+
+    <button @onclick="MoveUp">Up</button>
+    <button @onclick="MoveDown">Down</button>
+    <button @onclick="MoveLeft">Left</button>
+    <button @onclick="MoveRight">Right</button>
+}
+
+
+@code {
+    protected override void OnInitialized()
+    {
+        GameState.PlayerStateChanged += (s, e) => InvokeAsync(StateHasChanged);
+    }
+
+    string playerName;
+    bool joined = false;
+    PlayerState myPlayerState;
+    void join()
+    {
+        myPlayerState = GameState.JoinPlayer(playerName);
+        joined = true;
+    }
+    string imageUrl = "https://via.placeholder.com/50"; // Replace with your image URL
+
+    void MoveUp()
+    {
+        myPlayerState.Y += 10;
+        GameState.RaisePlayerStateChanged();
+    }
+
+    void MoveDown()
+    {
+        myPlayerState.Y -= 10;
+        GameState.RaisePlayerStateChanged();
+    }
+
+    void MoveLeft()
+    {
+        myPlayerState.X -= 10;
+        GameState.RaisePlayerStateChanged();
+    }
+
+    void MoveRight()
+    {
+        myPlayerState.X += 10;
+        GameState.RaisePlayerStateChanged();
+    }
+
+    void keyPress(KeyboardEventArgs e)
+    {
+        logger.LogInformation("Key {key} pressed", e.Key);
+        switch (e.Key)
+        {
+            case "ArrowUp":
+                MoveUp();
+                break;
+            case "ArrowDown":
+                MoveDown();
+                break;
+            case "ArrowRight":
+                MoveRight();
+                break;
+            case "ArrowLeft":
+                MoveLeft();
+                break;
+        }
+    }
+}
